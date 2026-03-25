@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Dashboard | Women Safety App</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="dashboard">
+      <h2>Welcome {{ name }}</h2>
+      <p>She Sheild Dashboard</p>
+
+      <a href="/history">
+        <button style="margin-bottom: 15px">View My Alerts</button>
+      </a>
+
+      <a href="/contacts">
+        <button style="margin-bottom: 15px">Emergency Contacts</button>
+      </a>
+
+      <button class="sos-btn">SOS</button>
+
+      <div class="info-box">
+        <p><strong>Current Location:</strong></p>
+        <p id="location">Location will appear here</p>
+      </div>
+
+      <div id="statusBox" class="status-box" style="display: none">
+        Emergency Alert Active
+      </div>
+      <div
+        id="sendStatus"
+        class="status-box"
+        style="
+          display: none;
+          background: #e6ffec;
+          color: #0d5f1b;
+          border: 1px solid #a4dfad;
+        "
+      >
+        SOS alert saved and emergency contacts notified.
+      </div>
+
+      <div class="info-box">
+        <p><strong>Emergency Numbers</strong></p>
+        <p>Police: 100</p>
+        <p>Women Helpline: 181</p>
+      </div>
+      <a href="/logout">
+        <button
+          style="
+            margin-top: 16px;
+            background: #dc3545;
+            color: #fff;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+          "
+        >
+          Logout
+        </button>
+      </a>
+    </div>
+  </body>
+  <script>
+    const sosBtn = document.querySelector(".sos-btn");
+    const locationText = document.getElementById("location");
+    const statusBox = document.getElementById("statusBox");
+    const sendStatus = document.getElementById("sendStatus");
+    const dashboard = document.querySelector(".dashboard");
+
+    sosBtn.addEventListener("click", () => {
+      if (navigator.geolocation) {
+        dashboard.classList.add("alert-mode");
+        statusBox.style.display = "block";
+        locationText.innerText = "Fetching location...";
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+
+            const mapLink = `https://www.google.com/maps?q=${lat},${lon}`;
+
+            // Save to backend
+            fetch("/save_sos", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: `latitude=${lat}&longitude=${lon}`,
+            })
+              .then((response) => response.text())
+              .then((data) => {
+                locationText.innerHTML = `
+                            🚨 <strong>SOS ACTIVATED</strong><br><br>
+                            📍 <a href="${mapLink}" target="_blank">Live Location</a><br><br>
+                            ✅ Alert Saved in Database
+                        `;
+                sendStatus.style.display = "block";
+                setTimeout(() => {
+                  sendStatus.style.display = "none";
+                }, 4500);
+              });
+          },
+          () => {
+            locationText.innerText = "Unable to fetch location.";
+          },
+        );
+      }
+    });
+  </script>
+</html>

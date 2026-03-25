@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Emergency Contacts | Women Safety App</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f2f5f8;
+        color: #222;
+      }
+      .page-wrap {
+        display: flex;
+        justify-content: center;
+        padding: 20px;
+      }
+      .card {
+        width: min(100%, 760px);
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        padding: 20px;
+        margin: 20px 0;
+      }
+      h2 {
+        margin: 0 0 12px;
+        font-size: 1.6rem;
+        text-align: center;
+      }
+      .nav-row {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .nav-row a button {
+        margin: 4px;
+        border: none;
+        background: #1b6ad2;
+        color: white;
+        padding: 8px 14px;
+        border-radius: 5px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .form-box {
+        background: #fafbff;
+        border: 1px solid #e1e5ed;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 18px;
+      }
+      .form-box label {
+        display: block;
+        margin-top: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+      .form-box input {
+        width: 100%;
+        display: block;
+        margin-top: 6px;
+        margin-bottom: 10px;
+        padding: 10px;
+        border: 1px solid #cdd5e2;
+        border-radius: 6px;
+        font-size: 0.95rem;
+      }
+      .form-box button {
+        margin-top: 8px;
+        width: 100%;
+        background: #28a745;
+        border: none;
+        border-radius: 6px;
+        padding: 10px;
+        font-size: 1rem;
+        color: white;
+        cursor: pointer;
+        font-weight: 700;
+      }
+      .table-box {
+        margin-top: 10px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+      }
+      th,
+      td {
+        border: 1px solid #dde3ef;
+        text-align: left;
+        padding: 10px;
+        font-size: 0.95rem;
+      }
+      th {
+        background: #f3f6ff;
+        color: #2c3f67;
+      }
+      .delete-btn {
+        background: #dc3545;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        padding: 6px 10px;
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
+      .empty-state {
+        margin: 8px 0;
+        color: #555;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-wrap">
+      <div class="card">
+        <h2>Emergency Contacts</h2>
+        <div class="nav-row">
+          <a href="/dashboard"
+            ><button type="button">Back to Dashboard</button></a
+          >
+        </div>
+
+        <div class="form-box">
+          <h3 style="margin: 0 0 10px">Add Contact</h3>
+          <form method="POST" action="/add_contact">
+            <label for="name">Name</label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              placeholder="Contact name"
+              required
+            />
+
+            <label for="phone">Phone</label>
+            <input
+              id="phone"
+              name="phone"
+              type="text"
+              placeholder="Phone number"
+              required
+            />
+
+            <label for="email">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="Email (optional)"
+            />
+
+            <button type="submit">Add Contact</button>
+          </form>
+        </div>
+
+        <div class="table-box">
+          <h3 style="margin-bottom: 8px">Saved Contacts</h3>
+          {% if contacts %}
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for contact in contacts %}
+              <tr>
+                <td>{{ contact['name'] }}</td>
+                <td>{{ contact['phone'] }}</td>
+                <td>{{ contact['email'] or '-' }}</td>
+                <td style="display: flex; gap: 6px">
+                  <a href="/edit_contact/{{ contact['id'] }}"
+                    ><button
+                      type="button"
+                      style="
+                        background: #007bff;
+                        color: #fff;
+                        border: none;
+                        border-radius: 5px;
+                        padding: 5px 10px;
+                        cursor: pointer;
+                      "
+                    >
+                      Edit
+                    </button></a
+                  >
+                  <form
+                    method="POST"
+                    action="/delete_contact"
+                    style="margin: 0"
+                  >
+                    <input
+                      type="hidden"
+                      name="contact_id"
+                      value="{{ contact['id'] }}"
+                    />
+                    <button class="delete-btn" type="submit">Delete</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p class="empty-state">No emergency contacts saved yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

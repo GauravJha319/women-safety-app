@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Register | Women Safety App</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <h2>Register</h2>
+
+      <form method="POST" action="/register">
+        <input name="name" placeholder="Full Name" required />
+        <input name="mobile" placeholder="Mobile Number" required />
+        <input name="contact1" placeholder="Emergency Contact 1" required />
+        <input name="contact2" placeholder="Emergency Contact 2" required />
+        <button type="submit">Register</button>
+      </form>
+
+      <p>Already registered? <a href="/">Login here</a></p>
+    </div>
+  </body>
+</html>

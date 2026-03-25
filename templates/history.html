@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+  <head>
+    <title>SOS History</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="dashboard">
+      <h2>My SOS Alert History</h2>
+
+      <a href="/dashboard">
+        <button>Back to Dashboard</button>
+      </a>
+
+      <br /><br />
+
+      {% if alerts %} {% for alert in alerts %}
+      <div class="info-box" style="margin-bottom: 10px">
+        <p><strong>Date & Time:</strong> {{ alert["timestamp"] }}</p>
+        <p>
+          <strong>Location:</strong>
+          <a
+            href="https://www.google.com/maps?q={{ alert['latitude'] }},{{ alert['longitude'] }}"
+            target="_blank"
+          >
+            View on Map
+          </a>
+        </p>
+        <form
+          method="GET"
+          action="/delete_alert/{{ alert['id'] }}"
+          style="margin-top: 8px"
+        >
+          <button
+            type="submit"
+            style="
+              background: #e74c3c;
+              color: #fff;
+              border: none;
+              padding: 6px 10px;
+              border-radius: 4px;
+              cursor: pointer;
+            "
+          >
+            Delete
+          </button>
+        </form>
+      </div>
+      {% endfor %} {% else %}
+      <p>No SOS alerts found.</p>
+      {% endif %}
+    </div>
+  </body>
+</html>
