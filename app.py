@@ -10,7 +10,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.secret_key = "monika_secret_key_123"
 app.permanent_session_lifetime = timedelta(days=7)
-
+@app.before_request
+def initialize_db():
+    create_table()
 # ----------------------
 # Database Connection
 # ----------------------
@@ -465,6 +467,5 @@ def logout():
 # Run App
 # ----------------------
 if __name__ == "__main__":
-    create_table()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
