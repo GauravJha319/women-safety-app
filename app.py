@@ -80,6 +80,10 @@ def create_table():
 def home():
     return "App is running"
 
+@app.route("/health")
+def health():
+    return "OK", 200
+
 # ----------------------
 # Register
 # ----------------------
