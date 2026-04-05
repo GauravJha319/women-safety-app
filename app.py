@@ -4,6 +4,7 @@ import smtplib
 from email.message import EmailMessage
 from datetime import datetime, timedelta
 import pytz
+import os
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
@@ -224,8 +225,8 @@ def get_emergency_contacts(user_id):
 # Email Alert Helper
 # ----------------------
 def send_sos_emails(user_name, latitude, longitude, contacts, user_id):
-    gmail_user = "gauravjha91127@gmail.com"  # update with your Gmail
-    gmail_password = "abtf sqhx zymc djee"  # set an app password (recommended)
+    gmail_user = os.getenv("EMAIL")  # update with your Gmail
+    gmail_password = os.getenv("EMAIL")  # set an app password (recommended)
 
     maps_link = f"https://www.google.com/maps/search/?api=1&query={latitude},{longitude}"
     tracking_link = f"http://127.0.0.1:5000/track/{user_id}"
@@ -461,4 +462,4 @@ def logout():
 # ----------------------
 if __name__ == "__main__":
     create_table()
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000)
