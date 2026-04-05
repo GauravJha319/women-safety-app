@@ -78,7 +78,7 @@ def create_table():
 # ----------------------
 @app.route("/")
 def home():
-    return render_template("login.html")
+    return "App is running"
 
 # ----------------------
 # Register
