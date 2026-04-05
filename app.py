@@ -226,7 +226,7 @@ def get_emergency_contacts(user_id):
 # ----------------------
 def send_sos_emails(user_name, latitude, longitude, contacts, user_id):
     gmail_user = os.getenv("EMAIL")  # update with your Gmail
-    gmail_password = os.getenv("EMAIL")  # set an app password (recommended)
+    gmail_password = os.getenv("PASSWORD")  # set an app password (recommended)
 
     maps_link = f"https://www.google.com/maps/search/?api=1&query={latitude},{longitude}"
     tracking_link = f"http://127.0.0.1:5000/track/{user_id}"
