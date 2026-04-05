@@ -1,25 +1,29 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Login | Women Safety App</title>
-   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <h2>Login</h2>
 
-<div class="container">
-    <h2>Login</h2>
+      <form method="POST" action="/login">
+        <input name="identifier" placeholder="Phone or Email" required />
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          required
+        />
+        <button type="submit">Login</button>
+      </form>
 
-   <form method="POST" action="/login">
-    <input name="mobile" placeholder="Mobile Number" required>
-    <button type="submit">Login</button>
-</form>
-
-
-
-   <p>New user? <a href="/register">Register here</a></p>
-
-</div>
-
-</body>
+      <p>New user? <a href="/register">Register here</a></p>
+    </div>
+  </body>
 </html>

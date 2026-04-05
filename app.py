@@ -2,12 +2,13 @@ from flask import Flask, render_template, request, redirect, session
 import sqlite3
 import smtplib
 from email.message import EmailMessage
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
-from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = "monika_secret_key_123"
+app.permanent_session_lifetime = timedelta(days=7)
 
 # ----------------------
 # Database Connection
@@ -28,11 +29,24 @@ def create_table():
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
             mobile TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
             contact1 TEXT NOT NULL,
             contact2 TEXT NOT NULL
         )
     """)
+
+    cursor.execute("PRAGMA table_info(users)")
+    existing_columns = [row[1] for row in cursor.fetchall()]
+    if "email" not in existing_columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN email TEXT")
+    if "password" not in existing_columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN password TEXT")
+    if "last_latitude" not in existing_columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN last_latitude TEXT")
+    if "last_longitude" not in existing_columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN last_longitude TEXT")
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS sos_alerts (
@@ -72,21 +86,28 @@ def home():
 def register():
     if request.method == "POST":
         name = request.form["name"]
+        email = request.form["email"]
         mobile = request.form["mobile"]
+        password = request.form["password"]
         contact1 = request.form["contact1"]
         contact2 = request.form["contact2"]
+
+        hashed_password = generate_password_hash(password)
 
         conn = get_db()
         cursor = conn.cursor()
 
         try:
             cursor.execute(
-                "INSERT INTO users (name, mobile, contact1, contact2) VALUES (?, ?, ?, ?)",
-                (name, mobile, contact1, contact2)
+                "INSERT INTO users (name, email, mobile, password, contact1, contact2) VALUES (?, ?, ?, ?, ?, ?)",
+                (name, email, mobile, hashed_password, contact1, contact2)
             )
             conn.commit()
-        except sqlite3.IntegrityError:
+        except sqlite3.IntegrityError as err:
             conn.close()
+            error_message = str(err).lower()
+            if "email" in error_message:
+                return "⚠ Email address already registered!"
             return "⚠ Mobile number already registered!"
 
         conn.close()
@@ -99,20 +120,25 @@ def register():
 # ----------------------
 @app.route("/login", methods=["POST"])
 def login():
-    mobile = request.form["mobile"]
+    identifier = request.form["identifier"]
+    password = request.form["password"]
 
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE mobile=?", (mobile,))
+    cursor.execute("SELECT * FROM users WHERE mobile=? OR email=?", (identifier, identifier))
     user = cursor.fetchone()
     conn.close()
 
-    if user:
-        session["user_id"] = user["id"]
-        session["name"] = user["name"]
-        return redirect("/dashboard")
-    else:
-        return "❌ Mobile number not found!"
+    if not user:
+        return "❌ Phone number or email not found!"
+
+    if not check_password_hash(user["password"], password):
+        return "❌ Incorrect password!"
+
+    session.permanent = True
+    session["user_id"] = user["id"]
+    session["name"] = user["name"]
+    return redirect("/dashboard")
 
 # ----------------------
 # Dashboard Route
@@ -123,6 +149,62 @@ def dashboard():
         return render_template("dashboard.html", name=session["name"])
     else:
         return redirect("/")
+
+# ----------------------
+# Track User Location
+@app.route("/track/<int:user_id>")
+def track_user(user_id):
+    return render_template("track.html", user_id=user_id)
+
+# ----------------------
+# Get User Location API
+@app.route("/get_location/<int:user_id>")
+def get_location(user_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT last_latitude, last_longitude FROM users WHERE id=?", (user_id,))
+    user = cursor.fetchone()
+    conn.close()
+
+    if user and user["last_latitude"] and user["last_longitude"]:
+        return {
+            "latitude": user["last_latitude"],
+            "longitude": user["last_longitude"]
+        }
+    else:
+        return {"error": "Location not available"}, 404
+
+# ----------------------
+# Update Live Location
+@app.route("/update_location", methods=["POST"])
+def update_location():
+    if "user_id" not in session:
+        return {"error": "Unauthorized"}, 401
+
+    payload = request.get_json(silent=True)
+    latitude = None
+    longitude = None
+
+    if payload:
+        latitude = payload.get("latitude")
+        longitude = payload.get("longitude")
+    else:
+        latitude = request.form.get("latitude")
+        longitude = request.form.get("longitude")
+
+    if latitude is None or longitude is None:
+        return {"error": "Latitude and longitude are required"}, 400
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE users SET last_latitude=?, last_longitude=? WHERE id=?",
+        (latitude, longitude, session["user_id"])
+    )
+    conn.commit()
+    conn.close()
+
+    return {"status": "ok"}
 
 # ----------------------
 # Get Emergency Contacts
@@ -141,11 +223,12 @@ def get_emergency_contacts(user_id):
 # ----------------------
 # Email Alert Helper
 # ----------------------
-def send_sos_emails(user_name, latitude, longitude, contacts):
+def send_sos_emails(user_name, latitude, longitude, contacts, user_id):
     gmail_user = "gauravjha91127@gmail.com"  # update with your Gmail
     gmail_password = "abtf sqhx zymc djee"  # set an app password (recommended)
 
     maps_link = f"https://www.google.com/maps/search/?api=1&query={latitude},{longitude}"
+    tracking_link = f"http://127.0.0.1:5000/track/{user_id}"
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     subject = "SOS! User needs help"
 
@@ -159,6 +242,7 @@ def send_sos_emails(user_name, latitude, longitude, contacts):
             f"Location: {maps_link}\n"
             f"Latitude: {latitude}, Longitude: {longitude}\n"
             f"Timestamp: {timestamp}\n\n"
+            f"Live Tracking: {tracking_link}\n\n"
             "Please respond immediately."
         )
 
@@ -315,7 +399,7 @@ def save_sos():
             print(message)
 
         # ✅ Pass timestamp in email also (optional but better)
-        send_sos_emails(session.get("name", "Unknown User"), latitude, longitude, contacts)
+        send_sos_emails(session.get("name", "Unknown User"), latitude, longitude, contacts, user_id)
 
     else:
         print("SOS ALERT: User has triggered emergency alert. No emergency contacts available.")

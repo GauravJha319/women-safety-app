@@ -21,6 +21,12 @@
         <button style="margin-bottom: 15px">Emergency Contacts</button>
       </a>
 
+      <button id="startTrackingBtn" style="margin-bottom: 15px">
+        Start Live Tracking
+      </button>
+      <button id="stopTrackingBtn" style="margin-bottom: 15px; display: none">
+        Stop Live Tracking
+      </button>
       <button class="sos-btn">SOS</button>
 
       <div class="info-box">
@@ -72,6 +78,70 @@
     const statusBox = document.getElementById("statusBox");
     const sendStatus = document.getElementById("sendStatus");
     const dashboard = document.querySelector(".dashboard");
+    const startTrackingBtn = document.getElementById("startTrackingBtn");
+    const stopTrackingBtn = document.getElementById("stopTrackingBtn");
+    let watchId = null;
+
+    function updateLocationDisplay(lat, lon) {
+      const mapLink = `https://www.google.com/maps?q=${lat},${lon}`;
+      locationText.innerHTML = `📍 <strong>Live Tracking</strong><br>Latitude: ${lat.toFixed(6)}<br>Longitude: ${lon.toFixed(6)}<br><a href="${mapLink}" target="_blank">Open in Maps</a>`;
+    }
+
+    function sendLocationToBackend(lat, lon) {
+      fetch("/update_location", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ latitude: lat, longitude: lon }),
+      }).catch((err) => {
+        console.error("Live tracking update failed", err);
+      });
+    }
+
+    startTrackingBtn.addEventListener("click", () => {
+      if (!navigator.geolocation) {
+        locationText.innerText =
+          "Geolocation is not supported by this browser.";
+        return;
+      }
+
+      if (watchId !== null) {
+        return;
+      }
+
+      startTrackingBtn.style.display = "none";
+      stopTrackingBtn.style.display = "inline-block";
+      locationText.innerText = "Starting live tracking...";
+
+      watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          updateLocationDisplay(lat, lon);
+          sendLocationToBackend(lat, lon);
+        },
+        (error) => {
+          locationText.innerText = `Unable to track location: ${error.message}`;
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 5000,
+          timeout: 10000,
+        },
+      );
+    });
+
+    stopTrackingBtn.addEventListener("click", () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+      }
+
+      stopTrackingBtn.style.display = "none";
+      startTrackingBtn.style.display = "inline-block";
+      locationText.innerText = "Live tracking stopped.";
+    });
 
     sosBtn.addEventListener("click", () => {
       if (navigator.geolocation) {
@@ -86,7 +156,6 @@
 
             const mapLink = `https://www.google.com/maps?q=${lat},${lon}`;
 
-            // Save to backend
             fetch("/save_sos", {
               method: "POST",
               headers: {
@@ -96,11 +165,7 @@
             })
               .then((response) => response.text())
               .then((data) => {
-                locationText.innerHTML = `
-                            🚨 <strong>SOS ACTIVATED</strong><br><br>
-                            📍 <a href="${mapLink}" target="_blank">Live Location</a><br><br>
-                            ✅ Alert Saved in Database
-                        `;
+                locationText.innerHTML = `\n                            🚨 <strong>SOS ACTIVATED</strong><br><br>\n                            📍 <a href="${mapLink}" target="_blank">Live Location</a><br><br>\n                            ✅ Alert Saved in Database\n                        `;
                 sendStatus.style.display = "block";
                 setTimeout(() => {
                   sendStatus.style.display = "none";

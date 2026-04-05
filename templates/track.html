@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Live Tracking | Women Safety App</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <h2>Live Location Tracking</h2>
+      <p>Tracking user ID: {{ user_id }}</p>
+
+      <div class="info-box">
+        <p><strong>Current Location:</strong></p>
+        <p id="location">Loading...</p>
+        <p id="maps-link"></p>
+      </div>
+
+      <div class="info-box">
+        <p><strong>Last Updated:</strong></p>
+        <p id="timestamp">Never</p>
+      </div>
+    </div>
+
+    <script>
+      const userId = {{ user_id }};
+      const locationText = document.getElementById("location");
+      const mapsLink = document.getElementById("maps-link");
+      const timestampText = document.getElementById("timestamp");
+
+      function updateLocation() {
+        fetch(`/get_location/${userId}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.error) {
+              locationText.innerText = "Location not available";
+              mapsLink.innerHTML = "";
+            } else {
+              const lat = parseFloat(data.latitude);
+              const lon = parseFloat(data.longitude);
+              locationText.innerHTML = `Latitude: ${lat.toFixed(6)}<br>Longitude: ${lon.toFixed(6)}`;
+              mapsLink.innerHTML = `<a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank">Open in Maps</a>`;
+            }
+            timestampText.innerText = new Date().toLocaleString();
+          })
+          .catch(err => {
+            console.error("Failed to fetch location", err);
+            locationText.innerText = "Error loading location";
+          });
+      }
+
+      // Initial load
+      updateLocation();
+
+      // Refresh every 5 seconds
+      setInterval(updateLocation, 5000);
+    </script>
+  </body>
+</html>

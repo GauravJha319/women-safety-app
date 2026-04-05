@@ -39,4 +39,4 @@ A Flask-based Women Safety Web Application designed to help users send emergency
 
 ---
 
-👩‍💻 Developed by Monika
+👩‍💻 Developed by Gaurav
