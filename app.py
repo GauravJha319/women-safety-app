@@ -86,9 +86,9 @@ def home():
 def health():
     return "OK", 200
 
-@app.route("/")
-def home():
-    return "OK"
+# @app.route("/")
+# def home():
+#     return "OK"
 
 # ----------------------
 # Register
