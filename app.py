@@ -80,7 +80,7 @@ def create_table():
 # ----------------------
 @app.route("/")
 def home():
-    return "App is running"
+    return render_template("login.html")
 
 @app.route("/health")
 def health():
