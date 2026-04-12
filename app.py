@@ -419,7 +419,7 @@ def save_sos():
         # ✅ Pass timestamp in email also (optional but better)
         threading.Thread(
     target=send_sos_emails,
-    args=(session.get("name", "Unknown User"), latitude, longitude, contacts)
+    args=(session.get("name", "Unknown User"), latitude, longitude, contacts, user_id)
 ).start()
 
     else:
