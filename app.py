@@ -264,13 +264,19 @@ def send_sos_emails(user_name, latitude, longitude, contacts, user_id):
         msg["Subject"] = subject
         msg.set_content(body)
 
-        try:
-            with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
-                smtp.starttls()
-                smtp.login(gmail_user, gmail_password)
-                smtp.send_message(msg)
-        except Exception as e:
-            print(f"Failed to send SOS email to {email_to}: {e}")
+    try:
+        print("EMAIL:", gmail_user)
+        print("PASSWORD LENGTH:", len(gmail_password) if gmail_password else "None")
+
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as smtp:
+            smtp.set_debuglevel(1)  # 🔥 THIS LINE IS VERY IMPORTANT
+            smtp.starttls()
+            smtp.login(gmail_user, gmail_password)
+            smtp.send_message(msg)
+
+        print("EMAIL SENT SUCCESSFULLY ✅")
+    except Exception as e:
+        print("FULL EMAIL ERROR:", str(e))
 
 # ----------------------
 # Contacts Page
