@@ -5,6 +5,7 @@ from email.message import EmailMessage
 from datetime import datetime, timedelta
 import pytz
 import os
+import threading
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
@@ -410,7 +411,10 @@ def save_sos():
             print(message)
 
         # ✅ Pass timestamp in email also (optional but better)
-        send_sos_emails(session.get("name", "Unknown User"), latitude, longitude, contacts, user_id)
+        threading.Thread(
+    target=send_sos_emails,
+    args=(session.get("name", "Unknown User"), latitude, longitude, contacts)
+).start()
 
     else:
         print("SOS ALERT: User has triggered emergency alert. No emergency contacts available.")
